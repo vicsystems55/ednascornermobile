@@ -37,18 +37,21 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   flutter_native_splash: ^2.1.1
-  webview_flutter: ^1.0.0
+  webview_flutter: ^4.0.7
   
   http: ^0.13.5
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   toast: ^0.3.0
   path_provider: ^2.0.11
+  cached_network_image: ^3.2.3
+  another_flushbar: ^1.12.29
+  badges: ^3.0.2
 
 
 
 flutter_native_splash:
-  color: "#161D31"
+  color: "#FFFFFF"
   # background_image: "assets/images/splash_bg.png"
   image: assets/images/launcher.png
   # fullscreen: true

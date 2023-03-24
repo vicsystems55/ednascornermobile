@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tps_mobile/screens/dashboard.dart';
 import 'package:tps_mobile/screens/login_page.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -19,8 +20,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      color: new Color(0x161D31),
-      title: 'Flutter Demo',
+      color: Colors.white,
+      title: 'Ednascorner',
       theme: ThemeData(
           // This is the theme of your application.
           //
@@ -33,21 +34,21 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           inputDecorationTheme: const InputDecorationTheme(
             labelStyle: TextStyle(
-              color: Colors.white54, //<-- SEE HERE
+              color: Color.fromARGB(137, 85, 85, 85), //<-- SEE HERE
             ),
             enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.white54),
+              borderSide: BorderSide(color: Colors.black38),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.white70),
+              borderSide: BorderSide(color: Colors.black54),
             ),
           ),
           textTheme: Theme.of(context).textTheme.apply(
-                bodyColor: Colors.white, //<-- SEE HERE
-                displayColor: Colors.white, //<-- SEE HERE
+                bodyColor: Color.fromARGB(255, 0, 0, 0), //<-- SEE HERE
+                displayColor: Color.fromARGB(255, 0, 0, 0), //<-- SEE HERE
               ),
-          primarySwatch: Colors.deepPurple),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+          primarySwatch: Colors.brown),
+      home: const MyHomePage(title: 'Ednascorner'),
     );
   }
 }
@@ -71,6 +72,45 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late Box box;
+
+  bool isLoggedIn = false;
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    openBox();
+
+    // print(box.get('token'));
+  }
+
+
+
+  Future openBox() async {
+
+    box = await Hive.openBox('data');
+
+    print(box.get('token'));
+
+    if (box.get('token') == null) {
+
+          setState(() {
+      isLoggedIn = false;
+    });
+      
+    } else {
+
+                setState(() {
+      isLoggedIn = true;
+    });
+       
+    }
+
+  
+  }
+
   int _counter = 0;
 
   void _incrementCounter() {
@@ -93,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      backgroundColor: Color.fromRGBO(22, 29, 49, 1),
+      backgroundColor: Color.fromRGBO(255, 255, 255, 1),
       // appBar: AppBar(
       //   elevation: 0,
       //   backgroundColor: Color.fromRGBO(22, 29, 49, 1),
@@ -101,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
       //   // the App.build method, and use it to set our appbar title.
       //   title: Text(widget.title),
       // ),
-      body: LoginScreen(),
+      body: isLoggedIn?DashboardPage(title: ''):LoginScreen(),
       // This trailing comma makes auto-formatting nicer for build methods.
     );
   }

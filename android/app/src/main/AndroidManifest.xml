@@ -2,7 +2,7 @@
     package="com.phoenixgn.phoenixgn_mobile">
     <uses-permission android:name="android.permission.INTERNET" />
    <application
-        android:label="Phoenixgn"
+        android:label="Ednascorner Store"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
