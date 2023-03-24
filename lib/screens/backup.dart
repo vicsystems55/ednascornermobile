@@ -233,7 +233,7 @@ class _DashboardPageState extends State<DashboardPage> {
       const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Store'),
       BottomNavigationBarItem(
           icon: badges.Badge(
-            badgeContent: Text(box.get('cartCount').toString()??'0'),
+            badgeContent: Text(cartCount.toString()),
             child: Icon(Icons.shopping_cart),
           ),
           label: 'Cart'),
@@ -335,9 +335,6 @@ class _RedState extends State<Red> {
 
   List products = [];
 
-      
-
-
   Future<void> updateData() async {
     box2 = await Hive.openBox('data2');
     box = await Hive.openBox('data');
@@ -379,11 +376,11 @@ class _RedState extends State<Red> {
           'product_id': productId
         }),
       );
-      var _jsonDecode = await jsonDecode((response.body));
+      // var _jsonDecode = await jsonDecode((response.body));
 
       // data = _jsonDecode;
 
-      print(_jsonDecode['totalCount']);
+      print(response.body);
 
       Flushbar(
         title: 'Hey awesome!!',
@@ -391,14 +388,9 @@ class _RedState extends State<Red> {
         duration: Duration(seconds: 3),
       ).show(context);
 
-
-      setState(() {
-        box.put('cartCount', _jsonDecode['totalCount']);
-      });
-
-      // const DashboardPage(
-      //   title: '',
-      // ).method();
+      const DashboardPage(
+        title: '',
+      ).method();
 
       // await putData(_jsonDecode);
     } catch (SocketException) {
@@ -443,64 +435,48 @@ class _RedState extends State<Red> {
                   itemCount: widget.products.length,
                   itemBuilder: (ctx, index) {
                     return Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Column(
                         children: [
-                          Expanded(
-                            flex: 2,
-                            child: Padding(
-                              padding: EdgeInsets.all(8),
-                              child: CachedNetworkImage(
-                                fit: BoxFit.cover,
-                                imageUrl:
-                                    "${widget.products[index]['img_url']}",
-                                progressIndicatorBuilder:
-                                    (context, url, downloadProgress) => Center(
-                                  child: CircularProgressIndicator(
-                                      value: downloadProgress.progress),
-                                ),
-                                errorWidget: (context, url, error) =>
-                                    Icon(Icons.error),
-                              ),
-                            ),
+                          CachedNetworkImage(
+                            imageUrl: "${widget.products[index]['img_url']}",
+                            progressIndicatorBuilder:
+                                (context, url, downloadProgress) =>
+                                    CircularProgressIndicator(
+                                        value: downloadProgress.progress),
+                            errorWidget: (context, url, error) =>
+                                Icon(Icons.error),
                           ),
-                          Expanded(
-                            flex: 3,
-                            child: Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text("${widget.products[index]['name']}",
+                                style: TextStyle(fontSize: 20.0)),
+                          ),
+                          Text(
+                              "${currencyFormatter.format(int.parse(widget.products[index]['price']))}"),
+                          const Divider(),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
                                 children: [
-                                  Text(
-                                    widget.products[index]['name'],
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    "${currencyFormatter.format(int.parse(widget.products[index]['price']))}",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  SizedBox(height: 8),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      addToCart(widget.products[index]['id']);
-                                    },
-                                    child: Text('Add to Cart'),
-                                  ),
+                                  const Text('Add to cart'),
+                                  Icon(Icons.add_shopping_cart)
                                 ],
                               ),
+                              onPressed: () {
+                                addToCart(widget.products[index]['id']);
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //       builder: (context) => const DashboardPage(
+                                //             title: '',
+                                //           )),
+                                // );
+                              },
                             ),
-                          ),
+                          )
                         ],
                       ),
                     );
@@ -692,21 +668,20 @@ class _BlueState extends State<Blue> {
       // // data = _jsonDecode;
       // print(_jsonDecode);
 
-      var dir = await getApplicationDocumentsDirectory();
-      Hive.init(dir.path);
-      box3 = await Hive.openBox('invoiceData');
+   var dir = await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
+    box3 = await Hive.openBox('invoiceData');
+  
 
-      await box.put('invoiceCode', null);
+    await box.put('invoiceCode', null);
 
-      print('cleared cart');
 
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const DashboardPage(
-                  title: '',
-                )),
-      );
+    print('cleared cart');
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardPage(title: '',)),
+    );
     } catch (SocketException) {
       print(SocketException);
     }

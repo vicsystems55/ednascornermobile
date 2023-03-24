@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final String imageUrl;
   final String productName;
-  final String price;
+  final double price;
 
   ProductCard({
     required this.imageUrl,
     required this.productName,
     required this.price,
   });
+
+  @override
+  _ProductCardState createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  bool _isAddedToCart = false;
+
+  void _addToCart() {
+    setState(() {
+      _isAddedToCart = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +39,7 @@ class ProductCard extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.all(8),
               child: Image.network(
-                imageUrl,
+                widget.imageUrl,
                 fit: BoxFit.cover,
                 height: double.infinity,
               ),
@@ -40,7 +53,7 @@ class ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    productName,
+                    widget.productName,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -48,19 +61,19 @@ class ProductCard extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    price,
+                    '\$${widget.price.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      //TODO: implement add to cart functionality
-                    },
-                    child: Text('Add to Cart'),
-                  ),
+                  _isAddedToCart
+                      ? Text('Added to cart')
+                      : ElevatedButton(
+                          onPressed: _addToCart,
+                          child: Text('Add to Cart'),
+                        ),
                 ],
               ),
             ),
