@@ -20,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   late Box box;
   List data = [];
 
+  bool _isObscure = true;
+
   bool isLoading = false;
   @override
   void initState() {
@@ -32,30 +34,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  void _toggle() {
+    setState(() {
+      _isObscure = !_isObscure;
+      
+    });
+  }
 
   Future openBox() async {
-
     try {
       box = await Hive.openBox('data');
 
-    print(box.get('token'));
+      print(box.get('token'));
 
-    if (box.get('token') == null) {
-    } else {
+      if (box.get('token') == null) {
+      } else {
         return Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const DashboardPage(
-                  title: '',
-                
-                )),
-      );
-    }
-    } catch (e) {
-      
-    }
-
-  
+          context,
+          MaterialPageRoute(
+              builder: (context) => const DashboardPage(
+                    title: '',
+                  )),
+        );
+      }
+    } catch (e) {}
   }
 
   Future<dynamic> login() async {
@@ -111,7 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
     box.put('name', data['user_data']['name']);
 
     box.put('email', data['user_data']['email']);
-
 
     //insert data
     // for (var d in data) {
@@ -171,12 +172,22 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                 child: TextField(
-                  obscureText: true,
-                   autofillHints: const [AutofillHints.password],
+                  obscureText: _isObscure,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: [AutofillHints.password],
                   controller: passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     labelText: 'Password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isObscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        print('t');
+                        _toggle();
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -199,12 +210,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : const Text('Login'),
                     onPressed: () {
-                       TextInput.finishAutofillContext();
+                      TextInput.finishAutofillContext();
                       print(emailController.text);
                       print(passwordController.text);
-    
+
                       login();
-    
+
                       // Navigator.push(
                       //   context,
                       //   MaterialPageRoute(
@@ -222,7 +233,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                     child: const Text(
                       'Sign up',
-                      
                     ),
                     onPressed: () {
                       Navigator.push(

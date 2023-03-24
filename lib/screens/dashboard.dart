@@ -13,6 +13,8 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:tps_mobile/screens/payment_page.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_paystack/flutter_paystack.dart';
 
 class DashboardPage extends StatefulWidget {
   method() => createState().generateInvoiceCode();
@@ -101,10 +103,8 @@ class _DashboardPageState extends State<DashboardPage> {
           'invoice_code': (box.get('invoiceCode')).toString(),
         };
 
-        final uri = Uri.https(
-            'ecomm.vicsystems.com.ng',
-            '/api/v1/invoices/' + (box.get('invoiceCode')).toString(),
-            queryParameters);
+        final uri = Uri.https('ecomm.vicsystems.com.ng',
+            '/api/v1/invoices/${box.get('invoiceCode')}', queryParameters);
 
         var response = await http.get(
           uri,
@@ -400,6 +400,11 @@ class _RedState extends State<Red> {
     // return Future.value(true);
   }
 
+  final NumberFormat currencyFormatter = NumberFormat.currency(
+    decimalDigits: 2,
+    symbol: 'N',
+  );
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -446,7 +451,8 @@ class _RedState extends State<Red> {
                             child: Text("${widget.products[index]['name']}",
                                 style: TextStyle(fontSize: 20.0)),
                           ),
-                          Text("${widget.products[index]['price']}"),
+                          Text(
+                              "${currencyFormatter.format(int.parse(widget.products[index]['price']))}"),
                           const Divider(),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -494,10 +500,13 @@ class _BlueState extends State<Blue> {
   List invoiceData = [];
   int totalAmount = 0;
   final String paymentUrl = '';
+  var publicKey = 'pk_test_81d0ea622e4cb15731a72ac7025af87867e6495a';
+  final plugin = PaystackPlugin();
 
   void initState() {
     // TODO: implement initState
     generateInvoiceCode();
+    plugin.initialize(publicKey: publicKey);
     super.initState();
   }
 
@@ -518,10 +527,8 @@ class _BlueState extends State<Blue> {
           'invoice_code': (box.get('invoiceCode')).toString(),
         };
 
-        final uri = Uri.https(
-            'ecomm.vicsystems.com.ng',
-            '/api/v1/invoices/' + (box.get('invoiceCode')).toString(),
-            queryParameters);
+        final uri = Uri.https('ecomm.vicsystems.com.ng',
+            '/api/v1/invoices/${box.get('invoiceCode')}', queryParameters);
 
         var response = await http.get(
           uri,
@@ -607,15 +614,102 @@ class _BlueState extends State<Blue> {
       var _jsonDecode = jsonDecode((response.body));
 
       // data = _jsonDecode;
-      print(_jsonDecode['data']['authorization_url']);
-      Navigator.push(
+      print(_jsonDecode['data']);
+
+      Charge charge = Charge()
+        ..amount = (totalAmount * 100)
+        ..reference = _jsonDecode['data']['reference']
+        // or ..accessCode = _getAccessCodeFrmInitialization()
+        ..email = box.get('email');
+      CheckoutResponse responsex = await plugin.checkout(
         context,
-        MaterialPageRoute(
-            builder: (context) => WebViewApp(
-                paymentUrl: _jsonDecode['data']['authorization_url'])),
+        method: CheckoutMethod.card, // Defaults to CheckoutMethod.selectable
+        charge: charge,
+        fullscreen: true,
+        logo: Image.asset(width: 100, 'assets/images/launcher.png'),
       );
+
+      print(responsex.reference);
+
+      if (responsex.reference != null) {
+        print('sending order');
+        placeOrder(responsex.reference);
+      }
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(
+      //       builder: (context) => WebViewApp(
+      //           paymentUrl: _jsonDecode['data']['authorization_url'])),
+      // );
     } catch (SocketException) {}
   }
+
+  Future<dynamic> placeOrder(reference) async {
+    String url = "https://ecomm.vicsystems.com.ng/api/v1/product-order";
+
+    print('starting to place');
+
+    try {
+      var response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer ' + box.get('token')
+        },
+        body: jsonEncode(<dynamic, dynamic>{
+          'reference': (reference),
+          'invoiceCode': box.get('invoiceCode'),
+          'trxref': reference,
+          'address': 'Abuja, Nigeria'
+        }),
+      );
+      // var _jsonDecode = jsonDecode((response.body));
+
+      // // data = _jsonDecode;
+      // print(_jsonDecode);
+
+   var dir = await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
+    box3 = await Hive.openBox('invoiceData');
+  
+
+    await box.put('invoiceCode', null);
+
+
+    print('cleared cart');
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardPage(title: '',)),
+    );
+    } catch (SocketException) {
+      print(SocketException);
+    }
+
+    // var mymap = box.toMap().values.toList();
+    // if (mymap == null) {
+    //   data.add('empty');
+    // } else {
+    //   data = mymap;
+
+    //   print(data);
+    // }
+
+    return Future.value(true);
+  }
+
+  void incrementQuantity(int index) {
+    setState(() {});
+  }
+
+  void decrementQuantity(int index) {
+    setState(() {});
+  }
+
+  final NumberFormat currencyFormatter = NumberFormat.currency(
+    decimalDigits: 2,
+    symbol: 'N',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -630,22 +724,41 @@ class _BlueState extends State<Blue> {
                     itemCount: invoiceData.length,
                     itemBuilder: (ctx, index) {
                       return Card(
-                        child: Container(
-                          height: 90,
-                          child: Row(
-                            children: [
-                              CachedNetworkImage(
-                                imageUrl:
-                                    "${invoiceData[index]['products']['img_url']}",
-                                progressIndicatorBuilder:
-                                    (context, url, downloadProgress) =>
-                                        CircularProgressIndicator(
-                                            value: downloadProgress.progress),
-                                errorWidget: (context, url, error) =>
-                                    Icon(Icons.error),
+                        child: ListTile(
+                          leading: Transform.translate(
+                            offset: Offset(-7, -7),
+                            child: Container(
+                              width: 60,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(
+                                    10), // add border radius
+                                image: DecorationImage(
+                                  image: NetworkImage(invoiceData[index]
+                                          ['products']
+                                      ['img_url']), // add background image
+                                  fit: BoxFit
+                                      .cover, // fit the image within the container
+                                ),
                               ),
-                              Text("${invoiceData[index]['products']['name']}"),
+                            ),
+                          ),
+                          title: Text(invoiceData[index]['products']['name']),
+                          subtitle: Row(
+                            children: [
+                              IconButton(
+                                onPressed: () => decrementQuantity(index),
+                                icon: const Icon(Icons.remove_circle_outline),
+                              ),
+                              Text(invoiceData[index]['qty']),
+                              IconButton(
+                                onPressed: () => incrementQuantity(index),
+                                icon: const Icon(Icons.add_circle_outline),
+                              ),
                             ],
+                          ),
+                          trailing: IconButton(
+                            onPressed: () => setState(() {}),
+                            icon: const Icon(Icons.delete),
                           ),
                         ),
                       );
@@ -655,7 +768,8 @@ class _BlueState extends State<Blue> {
               height: 50,
               padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
               child: ElevatedButton(
-                child: const Text('Proceed to Payment'),
+                child: Text(
+                    "Proceed to Payment ${currencyFormatter.format(totalAmount)} "),
                 onPressed: () {
                   initiatePayment();
                 },

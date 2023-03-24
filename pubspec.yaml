@@ -47,6 +47,9 @@ dependencies:
   cached_network_image: ^3.2.3
   another_flushbar: ^1.12.29
   badges: ^3.0.2
+  intl: ^0.17.0
+  flutter_paystack: ^1.0.7
+
 
 
 
