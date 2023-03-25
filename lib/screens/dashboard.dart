@@ -16,8 +16,10 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_paystack/flutter_paystack.dart';
 
+import 'payment_successful.dart';
+
 class DashboardPage extends StatefulWidget {
-  method() => createState().generateInvoiceCode();
+  method() => createState().getCartCount();
 
   const DashboardPage({Key? key, required this.title}) : super(key: key);
 
@@ -135,11 +137,28 @@ class _DashboardPageState extends State<DashboardPage> {
 
         invoiceData = _invoiceData;
 
-        // cartCount = invoiceData.length;
+        box.put('cartCount', invoiceData.length);
+
+        cartCount = invoiceData.length;
+
+        setState(() {
+          box.put('cartcount', invoiceData.length);
+        });
 
         return invoiceData;
       }
     }
+  }
+
+  Future<dynamic> getCartCount() async {
+    var dir = await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
+    box = await Hive.openBox('data');
+    print(box.get('cartCount'));
+
+    cartCount = box.get('cartCount');
+
+    return cartCount.toString();
   }
 
   Future putInvoiceData(data) async {
@@ -161,8 +180,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<dynamic> getProducts() async {
-    // var dir = await getApplicationDocumentsDirectory();
-    // Hive.init(dir.path);
+    var dir = await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
     box = await Hive.openBox('data');
     box2 = await Hive.openBox('data2');
 
@@ -226,6 +245,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
   int bottomSelectedIndex = 0;
 
+  void myFunction() {
+    getCartCount();
+    setState(() {});
+    print('Hello from the parent widget!');
+  }
+
   List<BottomNavigationBarItem> buildBottomNavBarItems() {
     return [
       // const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -233,7 +258,20 @@ class _DashboardPageState extends State<DashboardPage> {
       const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Store'),
       BottomNavigationBarItem(
           icon: badges.Badge(
-            badgeContent: Text(box.get('cartCount').toString()??'0'),
+            badgeContent: FutureBuilder<dynamic>(
+                future: getCartCount(),
+                builder:
+                    (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    // While the authentication check is in progress, display a loading spinner
+                    return Text('0');
+                  }
+                  if (snapshot.data != null) {
+                    return Text(snapshot.data);
+                  }
+                  return Text('00');
+                  ;
+                }),
             child: Icon(Icons.shopping_cart),
           ),
           label: 'Cart'),
@@ -255,14 +293,19 @@ class _DashboardPageState extends State<DashboardPage> {
       },
       children: <Widget>[
         Red(
-            // token: box!.get('token')??'',
-            // username: box!.get('name')??'',
-            // wallet_balance: (box!.get('wallet_balance')??0 / 500).toString()),
+          // token: box!.get('token')??'',
+          // username: box!.get('name')??'',
+          // wallet_balance: (box!.get('wallet_balance')??0 / 500).toString()),
 
-            token: token,
-            username: username,
-            products: products),
-        Blue(),
+          token: token,
+          username: username,
+          products: products,
+          onPressedCallback: myFunction,
+        ),
+        Blue(
+          onPressedCallback: myFunction,
+
+        ),
         Profile(),
         Yellow(),
         News(),
@@ -316,12 +359,14 @@ class Red extends StatefulWidget {
   final String token;
   final String username;
   final List products;
+  final Function onPressedCallback;
 
   const Red(
       {super.key,
       required this.token,
       required this.username,
-      required this.products});
+      required this.products,
+      required this.onPressedCallback});
 
   @override
   _RedState createState() => _RedState();
@@ -334,9 +379,6 @@ class _RedState extends State<Red> {
   late Box box;
 
   List products = [];
-
-      
-
 
   Future<void> updateData() async {
     box2 = await Hive.openBox('data2');
@@ -391,14 +433,13 @@ class _RedState extends State<Red> {
         duration: Duration(seconds: 3),
       ).show(context);
 
-
       setState(() {
         box.put('cartCount', _jsonDecode['totalCount']);
       });
 
-      // const DashboardPage(
-      //   title: '',
-      // ).method();
+      // widget.updateMessage;
+
+      widget.onPressedCallback();
 
       // await putData(_jsonDecode);
     } catch (SocketException) {
@@ -512,7 +553,12 @@ class _RedState extends State<Red> {
 }
 
 class Blue extends StatefulWidget {
-  const Blue();
+  final Function onPressedCallback;
+
+    const Blue(
+      {super.key,
+    
+      required this.onPressedCallback});
   @override
   _BlueState createState() => _BlueState();
 }
@@ -585,6 +631,11 @@ class _BlueState extends State<Blue> {
 
         totalAmount = int.parse(box.get('totalAmount'));
 
+        box.put('cartCount', invoiceData.length);
+
+      widget.onPressedCallback();
+
+
         // cartCount = invoiceData.length;
 
         // return invoiceData;
@@ -604,6 +655,8 @@ class _BlueState extends State<Blue> {
     }
 
     box.put('totalAmount', data['total_amount']);
+
+    box.put('invoiceId', data['id']);
 
     // print(box3);
 
@@ -692,21 +745,15 @@ class _BlueState extends State<Blue> {
       // // data = _jsonDecode;
       // print(_jsonDecode);
 
-      var dir = await getApplicationDocumentsDirectory();
-      Hive.init(dir.path);
-      box3 = await Hive.openBox('invoiceData');
-
       await box.put('invoiceCode', null);
 
       print('cleared cart');
 
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const DashboardPage(
-                  title: '',
-                )),
-      );
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SuccessPage(),
+          ));
     } catch (SocketException) {
       print(SocketException);
     }
@@ -723,12 +770,116 @@ class _BlueState extends State<Blue> {
     return Future.value(true);
   }
 
-  void incrementQuantity(int index) {
-    setState(() {});
+  Future<dynamic> incrementQuantity(invoiceItemId, currentQty) async {
+    // currentQty++;
+
+    print(invoiceItemId);
+
+    int newQty = int.parse(currentQty);
+
+    newQty++;
+
+    print('increasing quantity');
+    String url =
+        "https://ecomm.vicsystems.com.ng/api/v1/invoice-lines/$invoiceItemId";
+
+    try {
+      var response = await http.put(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': "application/json",
+          'Authorization': 'Bearer ' + box.get('token')
+        },
+        body: jsonEncode(<dynamic, dynamic>{
+          'qty': newQty,
+          'invoiceId': box.get('invoiceId')
+        }),
+      );
+
+      // var _jsonDecode = jsonDecode((response.body));
+
+      // data = _jsonDecode;
+      print(response.body);
+
+      generateInvoiceCode();
+
+      setState(() {});
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
-  void decrementQuantity(int index) {
-    setState(() {});
+  Future<dynamic> decrementQuantity(invoiceItemId, currentQty) async {
+    // currentQty++;
+
+    print(invoiceItemId);
+
+    int newQty = int.parse(currentQty);
+
+    newQty--;
+
+    print('increasing quantity');
+    String url =
+        "https://ecomm.vicsystems.com.ng/api/v1/invoice-lines/$invoiceItemId";
+
+    try {
+      var response = await http.put(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': "application/json",
+          'Authorization': 'Bearer ' + box.get('token')
+        },
+        body: jsonEncode(<dynamic, dynamic>{
+          'qty': newQty,
+          'invoiceId': box.get('invoiceId')
+        }),
+      );
+
+      // var _jsonDecode = jsonDecode((response.body));
+
+      // data = _jsonDecode;
+      print(response.body);
+
+      generateInvoiceCode();
+
+      setState(() {});
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  Future<dynamic> removeItem(invoiceItemId) async {
+    // currentQty++;
+
+    print(invoiceItemId);
+
+    print('removing item');
+    String url =
+        "https://ecomm.vicsystems.com.ng/api/v1/invoice-lines/$invoiceItemId";
+
+    try {
+      var response = await http.delete(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': "application/json",
+          'Authorization': 'Bearer ' + box.get('token')
+        },
+        body: jsonEncode(<dynamic, dynamic>{'invoiceId': box.get('invoiceId')}),
+      );
+
+      print(response.body);
+
+      generateInvoiceCode();
+
+      
+
+
+
+
+      setState(() {});
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   final NumberFormat currencyFormatter = NumberFormat.currency(
@@ -771,18 +922,26 @@ class _BlueState extends State<Blue> {
                           subtitle: Row(
                             children: [
                               IconButton(
-                                onPressed: () => decrementQuantity(index),
+                                onPressed: () {
+                                  decrementQuantity(invoiceData[index]['id'],
+                                      invoiceData[index]['qty']);
+                                },
                                 icon: const Icon(Icons.remove_circle_outline),
                               ),
                               Text(invoiceData[index]['qty']),
                               IconButton(
-                                onPressed: () => incrementQuantity(index),
+                                onPressed: () {
+                                  incrementQuantity(invoiceData[index]['id'],
+                                      invoiceData[index]['qty']);
+                                },
                                 icon: const Icon(Icons.add_circle_outline),
                               ),
                             ],
                           ),
                           trailing: IconButton(
-                            onPressed: () => setState(() {}),
+                            onPressed: () {
+                              removeItem(invoiceData[index]['id']);
+                            },
                             icon: const Icon(Icons.delete),
                           ),
                         ),
@@ -979,25 +1138,82 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        padding: EdgeInsets.all(10),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: () {
-                logout();
-              },
-              child: Card(
-                color: Color.fromRGBO(40, 48, 70, 1),
-                elevation: 5,
-                child: ListTile(
-                  textColor: Colors.white,
-                  iconColor: Colors.orange,
-                  leading: Icon(Icons.logout),
-                  title: Text('Log Out'),
+      padding: EdgeInsets.all(10),
+      child: Column(
+        children: [
+          Container(
+            height: 220.0,
+            width: double.infinity,
+            decoration: BoxDecoration(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 50.0,
+                  backgroundImage: AssetImage('assets/images/1.jpeg'),
                 ),
+                SizedBox(height: 10.0),
+                Text(
+                  'John Doe',
+                  style: TextStyle(
+                    fontSize: 22.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
+              child: Column(
+                children: [
+                  _buildMenuItem(context, 'My Orders', Icons.shopping_bag),
+                  _buildMenuItem(context, 'Notification', Icons.notifications),
+                  _buildMenuItem(context, 'Settings', Icons.settings),
+                  _buildMenuItem(context, 'Contact Us', Icons.phone),
+                  _buildMenuItem(context, 'Logout', Icons.logout),
+                ],
               ),
-            )
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(BuildContext context, String title, IconData icon) {
+    return InkWell(
+      onTap: () {
+        // TODO: Implement menu item tap action
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 20.0),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20.0,
+              color: Colors.grey[600],
+            ),
+            SizedBox(width: 20.0),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Spacer(),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey[600],
+              size: 18.0,
+            ),
           ],
-        ));
+        ),
+      ),
+    );
   }
 }

@@ -1,59 +1,90 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
 
-class Dashpage extends StatefulWidget {
-  const Dashpage({super.key});
-
-  @override
-  State<Dashpage> createState() => _DashpageState();
-}
-
-class _DashpageState extends State<Dashpage> {
-  int currentIndex = 0;
-  final screens = [
-    const Center(
-      child: Text('home', style: TextStyle(
-        color: Colors.black
-      )),
-    ),
-
-       Center(
-      child: Text('feed', style: TextStyle(
-        color: Colors.black
-      )),
-    ),
-
-       Center(
-      child: Text('earnings', style: TextStyle(
-        color: Colors.black
-      )),
-    ),
-  ];
+class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Bottom Navigation')),
-      body: screens[currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) {
-            currentIndex = index;
-            setState(() {});
-
-            print(currentIndex);
-          },
-          items: [
-      const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.wallet_rounded),
-        label: 'Earnings',
+      body: Column(
+        children: [
+          Container(
+            height: double.infinity,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color.fromARGB(255, 33, 243, 114), Color.fromARGB(255, 243, 145, 33)],
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 50.0,
+                  backgroundImage: AssetImage('assets/images/profile.jpg'),
+                ),
+                SizedBox(height: 10.0),
+                Text(
+                  'John Doe',
+                  style: TextStyle(
+                    fontSize: 22.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Column(
+                children: [
+                  _buildMenuItem(context, 'My Orders', Icons.shopping_bag),
+                  _buildMenuItem(context, 'Notification', Icons.notifications),
+                  _buildMenuItem(context, 'Settings', Icons.settings),
+                  _buildMenuItem(context, 'Contact Us', Icons.phone),
+                  _buildMenuItem(context, 'Logout', Icons.logout),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Store'),
-      const BottomNavigationBarItem(icon: Icon(Icons.newspaper), label: 'News'),
-      const BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle_sharp), label: 'Profile'),
-          ]),
+    );
+  }
+
+  Widget _buildMenuItem(BuildContext context, String title, IconData icon) {
+    return InkWell(
+      onTap: () {
+        // TODO: Implement menu item tap action
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 20.0),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 30.0,
+              color: Colors.grey[600],
+            ),
+            SizedBox(width: 20.0),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Spacer(),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.grey[600],
+              size: 18.0,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

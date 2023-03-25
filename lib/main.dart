@@ -6,7 +6,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:toast/toast.dart';
 
-
 void main() async {
   await Hive.initFlutter();
   runApp(const MyApp());
@@ -76,7 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool isLoggedIn = false;
 
-
   @override
   void initState() {
     // TODO: implement initState
@@ -86,29 +84,16 @@ class _MyHomePageState extends State<MyHomePage> {
     // print(box.get('token'));
   }
 
-
-
-  Future openBox() async {
-
+  Future<bool> openBox() async {
     box = await Hive.openBox('data');
 
     print(box.get('token'));
 
-    if (box.get('token') == null) {
-
-          setState(() {
-      isLoggedIn = false;
-    });
-      
-    } else {
-
-                setState(() {
+    if (box.get('token') != null) {
       isLoggedIn = true;
-    });
-       
     }
 
-  
+    return isLoggedIn;
   }
 
   int _counter = 0;
@@ -141,8 +126,41 @@ class _MyHomePageState extends State<MyHomePage> {
       //   // the App.build method, and use it to set our appbar title.
       //   title: Text(widget.title),
       // ),
-      body: isLoggedIn?DashboardPage(title: ''):LoginScreen(),
+      // body: isLoggedIn?DashboardPage(title: ''):LoginScreen(),
+      body: FutureBuilder<bool>(
+        future: openBox(),
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // While the network call is in progress, display a loading spinner
+            return const LoadingScreen();
+          } else if (snapshot.hasError) {
+            // If an error occurred during the network call, display an error message
+            return LoadingScreen();
+          } else {
+            if(snapshot.data == true){
+            return DashboardPage(title: '',);
+
+            }else{
+               return const LoginScreen();
+            }
+            // If the network call was successful, display the data
+
+           
+          }
+        },
+      ),
       // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: CircularProgressIndicator(),
     );
   }
 }

@@ -114,6 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     box.put('email', data['user_data']['email']);
 
+    box.put('cartCount', '0');
+
+
+    
+
     //insert data
     // for (var d in data) {
     //   box.add(data);
